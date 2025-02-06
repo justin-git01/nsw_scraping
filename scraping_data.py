@@ -132,9 +132,11 @@ def process_gtfs_static_data(data):
 def real_time_gtfs(interval=180):
     """Continuously fetch, parse, and store GTFS-RT data every interval seconds."""
     while True:
-        for data_type in GTFSDataType:  
+        fetch_time = datetime.datetime.now().isoformat()  # Get current timestamp
+
+        for data_type in GTFSDataType:
             uri, file, data_category = data_type.value
-            print(f"Fetching {data_type.name}...")
+            print(f"[{fetch_time}] Fetching {data_type.name}...")  # Print timestamp
 
             data = fetch_gtfs_data(uri)
 
@@ -143,7 +145,7 @@ def real_time_gtfs(interval=180):
             elif data_category == "STATIC":
                 process_gtfs_static_data(data)
 
-        print(f"Waiting {interval} seconds before next update...\n")
+        print(f"[{fetch_time}] Waiting {interval} seconds before next update...\n")
         time.sleep(interval)
 
 # Start the real-time GTFS parser
