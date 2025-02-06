@@ -8,6 +8,7 @@ import datetime
 from io import BytesIO
 from google.protobuf.json_format import MessageToDict
 from google.transit import gtfs_realtime_pb2
+from enum import Enum  # Import Enum for GTFSDataType
 
 # API Key (Replace with your actual key)
 API_KEY = "NKg1pSpaOzGgENc338qcqCsQTNnOanAoOtN3"
@@ -22,9 +23,17 @@ TRIP_UPDATES_FILE = "trip_updates_data.json"
 VEHICLE_POSITIONS_FILE = "vehicle_positions_data.json"
 
 # ==============================
+# Define GTFS Data Types (Fix for NameError)
+# ==============================
+class GTFSDataType(Enum):
+    TRIP_UPDATES = (TRIP_UPDATES_URI, TRIP_UPDATES_FILE, "DYNAMIC")
+    VEHICLE_POSITIONS = (VEHICLE_POSITIONS_URI, VEHICLE_POSITIONS_FILE, "DYNAMIC")
+    TIMETABLE = (TIMETABLE_URI, None, "STATIC")  # No file path needed for static data
+
+# ==============================
 # Function: Fetch GTFS-RT Data
 # ==============================
-def fetch_gtfs_data(url, is_gtfs_static=False):
+def fetch_gtfs_data(url):
     """Fetch GTFS-RT or static GTFS data from the API."""
     try:
         response = requests.get(url, headers={'Authorization': f'apikey {API_KEY}'}, timeout=10)
@@ -123,15 +132,16 @@ def process_gtfs_static_data(data):
 def real_time_gtfs(interval=180):
     """Continuously fetch, parse, and store GTFS-RT data every interval seconds."""
     while True:
-        print("\nFetching Trip Updates...")
-        parse_gtfs_realtime_data(fetch_gtfs_data(TRIP_UPDATES_URI), TRIP_UPDATES_FILE)
+        for data_type in GTFSDataType:  
+            uri, file, data_category = data_type.value
+            print(f"Fetching {data_type.name}...")
 
-        print("Fetching Vehicle Positions...")
-        parse_gtfs_realtime_data(fetch_gtfs_data(VEHICLE_POSITIONS_URI), VEHICLE_POSITIONS_FILE)
+            data = fetch_gtfs_data(uri)
 
-        print("Fetching GTFS Static Timetable...")
-        gtfs_static_data = fetch_gtfs_data(TIMETABLE_URI, is_gtfs_static=True)
-        process_gtfs_static_data(gtfs_static_data)
+            if data_category == "DYNAMIC":
+                parse_gtfs_realtime_data(data, file)
+            elif data_category == "STATIC":
+                process_gtfs_static_data(data)
 
         print(f"Waiting {interval} seconds before next update...\n")
         time.sleep(interval)
