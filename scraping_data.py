@@ -8,9 +8,9 @@ import datetime
 from io import BytesIO
 from google.protobuf.json_format import MessageToDict
 from google.transit import gtfs_realtime_pb2
-from enum import Enum  # Import Enum for GTFSDataType
+from enum import Enum 
 
-# API Key (Replace with your actual key)
+# API Key
 API_KEY = "NKg1pSpaOzGgENc338qcqCsQTNnOanAoOtN3"
 
 # GTFS-RT Endpoints
@@ -28,7 +28,7 @@ VEHICLE_POSITIONS_FILE = "vehicle_positions_data.json"
 class GTFSDataType(Enum):
     TRIP_UPDATES = (TRIP_UPDATES_URI, TRIP_UPDATES_FILE, "DYNAMIC")
     VEHICLE_POSITIONS = (VEHICLE_POSITIONS_URI, VEHICLE_POSITIONS_FILE, "DYNAMIC")
-    TIMETABLE = (TIMETABLE_URI, None, "STATIC")  # No file path needed for static data
+    TIMETABLE = (TIMETABLE_URI, None, "STATIC") 
 
 # ==============================
 # Function: Fetch GTFS-RT Data
@@ -85,10 +85,10 @@ def parse_gtfs_realtime_data(data, file_path):
 
     existing_data.append(feed_dict)
 
-    # Save updated data with a checkpoint
+    # Save updated data with a checkpoint (appending to existing data)
     try:
-        with open(file_path, "w") as f:
-            json.dump(existing_data, f, indent=4)
+        with open(file_path, "a") as f:
+            json.dump([feed_dict], f, indent=4)
         print(f"Data appended to {file_path}. File size: {os.path.getsize(file_path) / (1024*1024):.2f} MB")
     except IOError as e:
         print(f"Error saving data: {e}")
@@ -133,10 +133,11 @@ def real_time_gtfs(interval=180):
     """Continuously fetch, parse, and store GTFS-RT data every interval seconds."""
     while True:
         fetch_time = datetime.datetime.now().isoformat()  # Get current timestamp
-
-        for data_type in GTFSDataType:
+        print(f"[{fetch_time}] Starting new fetch cycle...\n")
+        
+        for data_type in GTFSDataType:  
             uri, file, data_category = data_type.value
-            print(f"[{fetch_time}] Fetching {data_type.name}...")  # Print timestamp
+            print(f"[{fetch_time}] Fetching {data_type.name}...")
 
             data = fetch_gtfs_data(uri)
 
